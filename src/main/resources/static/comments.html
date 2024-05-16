@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>댓글 기능</title>
+    <style>
+        .comment-item {
+            border-bottom: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .comment-actions {
+            font-size: 0.8em;
+        }
+
+        .comment-actions button {
+            cursor: pointer;
+            color: #007BFF;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<div id="comments-container"></div>
+<textarea id="comment-text" rows="4" cols="50"></textarea>
+<button onclick="createComment()">댓글 작성</button>
+
+<script>
+    const postId = new URLSearchParams(window.location.search).get('postId');
+
+    document.addEventListener('DOMContentLoaded', function () {
+        fetchComments();
+    });
+
+    function fetchComments() {
+        fetch(`/api/comments/${postId}`)
+            .then(response => response.json())
+            .then(data => {
+                displayComments(data.responseData);
+            })
+            .catch(error => {
+                console.error('Error loading comments:', error);
+            });
+    }
+
+    function displayComments(comments) {
+        const container = document.getElementById('comments-container');
+        container.innerHTML = ''; // Clear previous comments
+        comments.forEach(comment => {
+            const commentElement = document.createElement('div');
+            commentElement.className = 'comment-item';
+            commentElement.innerHTML = `
+                <p>${comment.comment}</p>
+                <div class="comment-actions">
+                    <button onclick="editComment(${comment.id})">수정하기</button>
+                    <button onclick="deleteComment(${comment.id})">삭제하기</button>
+                </div>
+            `;
+            container.appendChild(commentElement);
+        });
+    }
+
+    function createComment() {
+        const commentText = document.getElementById('comment-text').value;
+        fetch(`/api/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ comment: commentText, postId: postId })
+        })
+            .then(response => {
+                if (response.ok) {
+                    fetchComments(); // Reload comments
+                } else {
+                    throw new Error('Failed to create comment');
+                }
+            })
+            .catch(error => {
+                console.error('Error creating comment:', error);
+            });
+    }
+
+    function editComment(commentId) {
+        const newComment = prompt("댓글 수정:");
+        if (newComment) {
+            fetch(`/api/comments/${commentId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ commentId: commentId, comment: newComment })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        fetchComments();
+                    } else {
+                        throw new Error('Failed to update comment');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating comment:', error);
+                });
+        }
+    }
+
+    function deleteComment(commentId) {
+        if (confirm("댓글을 삭제하시겠습니까?")) {
+            fetch(`/api/comments/${commentId}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        fetchComments();
+                    } else {
+                        throw new Error('Failed to delete comment');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting comment:', error);
+                });
+        }
+    }
+</script>
+</body>
+</html>

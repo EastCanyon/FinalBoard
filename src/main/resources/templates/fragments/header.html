@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header</title>
+    <style>
+        /* 헤더 스타일 */
+        .navbar {
+            background-color: #2c3e50;
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar .brand {
+            color: white;
+            padding: 0 20px;
+            text-decoration: none;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .navbar a {
+            color: white;
+            padding: 14px 20px;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .navbar a:hover {
+            background-color: #575757;
+        }
+
+        .header-auth-buttons {
+            display: flex;
+        }
+
+        .header-auth-buttons a {
+            margin-left: 10px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            background-color: #8258FA;
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div th:fragment="header">
+    <nav class="navbar">
+        <div class="navbar-left">
+            <a th:href="@{/}" class="brand">DogDrip.net</a>
+            <a th:href="@{/category1}">인기글</a>
+            <a th:href="@{/category3}">읽을 거리 판</a>
+            <a th:href="@{/category4}">커뮤니티</a>
+            <a th:href="@{/category7}">기타</a>
+        </div>
+        <div class="header-auth-buttons">
+            <a th:href="@{/login.html}" class="header-btn">로그인</a>
+            <a th:href="@{/signup.html}" class="header-btn">회원가입</a>
+        </div>
+    </nav>
+</div>
+</body>
+</html>

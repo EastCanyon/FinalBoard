@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 수정</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .edit-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .edit-container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .edit-container label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .edit-container input[type="text"],
+        .edit-container textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .edit-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .edit-container button:hover {
+            background-color: #1a242f;
+        }
+    </style>
+</head>
+<body>
+<div class="edit-container">
+    <h1>게시글 수정</h1>
+    <form id="edit-form">
+        <label for="title">제목:</label>
+        <input type="text" id="title" name="title" required>
+        <label for="content">내용:</label>
+        <textarea id="content" name="content" rows="10" required></textarea>
+        <button type="submit">수정하기</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const postId = new URLSearchParams(window.location.search).get('id');
+
+        // Fetch the post details and populate the form
+        fetch(`/api/posts/${postId}`)
+            .then(response => response.json())
+            .then(apiResult => {
+                if (apiResult.returnMessage === "SUCCESS" && apiResult.responseData) {
+                    const post = apiResult.responseData;
+                    document.getElementById('title').value = post.title;
+                    document.getElementById('content').value = post.content;
+                } else {
+                    alert('게시글을 불러올 수 없습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading the post:', error);
+                alert('게시글을 불러오는 중 오류가 발생했습니다.');
+            });
+
+        document.getElementById('edit-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            fetch(`/api/posts/${postId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, content })
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to update post');
+                    return response.json();
+                })
+                .then(data => {
+                    alert('게시글이 수정되었습니다.');
+                    window.location.href = '/'; // 메인 페이지로 리다이렉션
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('게시글 수정에 실패했습니다.');
+                });
+        });
+    });
+</script>
+</body>
+</html>

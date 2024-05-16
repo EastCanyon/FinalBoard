@@ -1,0 +1,18 @@
+server:
+  port: 8888
+
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/crud  # 'crud' is the database name
+    username: root
+    password: a1234
+    driver-class-name: org.mariadb.jdbc.Driver
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      -
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    cache: false

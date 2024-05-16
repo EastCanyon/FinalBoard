@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시판</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* 기존 스타일 코드 유지 */
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-left">
+        <a th:href="@{/}" class="brand">FinalBoard</a>
+        <a th:href="@{/category1}">인기글</a>
+        <a th:href="@{/category3}">읽을 거리 판</a>
+        <a th:href="@{/category4}">커뮤니티</a>
+        <a th:href="@{/category7}">기타</a>
+    </div>
+    <div class="header-auth-buttons">
+        <a th:href="@{/login.html}" class="btn">로그인</a>
+        <a th:href="@{/signup.html}" class="btn">회원가입</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="sidebar">
+        <a href="#" class="btn">공지사항</a>
+        <a href="#" class="btn">게시판 가이드</a>
+        <a href="#" class="btn">즐겨찾기</a>
+    </div>
+    <div class="content">
+        <div id="posts-list" th:fragment="posts-list"></div>
+
+        <div class="pagination">
+            <ul></ul>
+        </div>
+
+        <form id="search-form">
+            <input type="text" id="search-input" placeholder="검색어 입력">
+            <select id="sort-option">
+                <option value="createdAt,desc">최신순</option>
+                <option value="title,asc">제목순</option>
+                <option value="viewCount,desc">조회수순</option>
+            </select>
+            <button type="submit" class="btn">검색</button>
+        </form>
+
+        <div class="btn-container">
+            <a href="/page/new.html" class="btn">글 작성</a>
+        </div>
+    </div>
+    <div class="sidebar">
+        <img src="/images/sidebar-ad.jpg" alt="Ad">
+    </div>
+</div>
+
+<footer th:replace="fragments/footer :: footer"></footer>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        getPosts(1, '', 'createdAt,desc');
+    });
+
+    function getPosts(page, searchKeyword, sortOption) {
+        fetch('/api/posts?page=' + (page - 1) + '&search=' + encodeURIComponent(searchKeyword) + '&sort=' + sortOption)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load posts');
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayPosts(data.responseData.content);
+                setupPagination(data.responseData);
+            })
+            .catch(error => {
+                console.error('Error loading the posts:', error);
+                document.getElementById('posts-list').innerHTML = '게시글을 불러올 수 없습니다.';
+            });
+    }
+
+    function displayPosts(posts) {
+        const postsList = document.getElementById('posts-list');
+        postsList.innerHTML = '<table><thead><tr><th>번호</th><th>제목</th><th>작성자</th><th>작성일</th><th>조회수</th></tr></thead><tbody>';
+        posts.forEach(post => {
+            if (!post.deletedAt) {
+                const postRow = document.createElement('tr');
+                postRow.innerHTML = `
+                        <td>${post.id}</td>
+                        <td><a href="/details.html?postId=${post.id}" class="post-link">${post.title}</a></td>
+                        <td>${post.nickname}</td>
+                        <td>${new Date(post.createdAt).toLocaleDateString('ko-KR')}</td>
+                        <td>${post.viewCount}</td>
+                    `;
+                postsList.querySelector('tbody').appendChild(postRow);
+            }
+        });
+        postsList.innerHTML += '</tbody></table>';
+    }
+
+    function setupPagination(pageInfo) {
+        const pagination = document.querySelector('.pagination ul');
+        pagination.innerHTML = '';
+        if (pageInfo.number > 0) {
+            pagination.innerHTML += `<li><a href="#" data-page="1">처음</a></li>`;
+            pagination.innerHTML += `<li><a href="#" data-page="${pageInfo.number}">이전</a></li>`;
+        }
+        for (let i = 1; i <= pageInfo.totalPages; i++) {
+            pagination.innerHTML += `<li><a href="#" class="${pageInfo.number === i - 1 ? 'active' : ''}" data-page="${i}">${i}</a></li>`;
+        }
+        if (pageInfo.number < pageInfo.totalPages - 1) {
+            pagination.innerHTML += `<li><a href="#" data-page="${pageInfo.number + 2}">다음</a></li>`;
+            pagination.innerHTML += `<li><a href="#" data-page="${pageInfo.totalPages}">마지막</a></li>`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setupEventListeners();
+    });
+
+    function setupEventListeners() {
+        document.querySelector('.pagination').addEventListener('click', function (event) {
+            event.preventDefault();
+            const target = event.target;
+            if (target.tagName === 'A' && target.dataset.page) {
+                const page = parseInt(target.dataset.page, 10);
+                const searchKeyword = document.getElementById('search-input').value;
+                const sortOption = document.getElementById('sort-option').value;
+                getPosts(page, searchKeyword, sortOption);
+            }
+        });
+
+        const searchForm = document.getElementById('search-form');
+        if (searchForm) {
+            searchForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                const searchKeyword = document.getElementById('search-input').value;
+                const sortOption = document.getElementById('sort-option').value;
+                getPosts(1, searchKeyword, sortOption);
+            });
+        } else {
+            console.error('Search form is not found!');
+        }
+    }
+</script>
+</body>
+</html>
