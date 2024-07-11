@@ -44,3 +44,130 @@ FinalBoard/
 ├── .gitignore                                  # Git 무시 파일 설정
 └── README.md                                   # 프로젝트 설명 파일
 
+## 6. 페이징 유틸리티
+
+FinalBoard 프로젝트는 데이터의 양이 많을 때 사용자가 쉽게 데이터를 탐색할 수 있도록 페이지네이션 기능을 포함하고 있습니다. 이를 위해 `PagingUtils` 클래스를 직접 구현하여 사용했습니다.
+
+### PagingUtils 클래스
+
+`PagingUtils` 클래스는 페이지네이션을 위한 유틸리티 클래스입니다. 이 클래스는 페이지 블록, 시작 및 끝 페이지, 데이터 범위 등을 계산하는 기능을 제공합니다. 
+
+#### PagingUtils 클래스 설계 및 구현
+
+`PagingUtils` 클래스는 다음과 같은 주요 메서드와 내부 클래스를 포함하고 있습니다.
+
+1. **getPagingInfo**: 페이징 정보를 계산하여 반환하는 메서드입니다. 이 메서드는 다음과 같은 계산 과정을 포함합니다.
+   - 페이지 블록의 수, 페이지 크기, 총 페이지 블록 수, 현재 페이지를 검증 및 계산합니다.
+   - 시작 및 끝 페이지 블록을 계산하고, 이전 및 다음 페이지가 존재하는지 여부를 결정합니다.
+   - 시작 및 끝 데이터 번호를 계산합니다.
+
+2. **checkPageSizeValidation**: 주어진 페이지 크기를 검증하여 유효한 값으로 변환합니다.
+
+3. **checkCurrentPageValidation**: 주어진 현재 페이지를 검증하여 유효한 값으로 변환합니다.
+
+4. **calTotalPageBlockCnt**: 전체 데이터 수와 페이지 크기를 기반으로 총 페이지 블록 수를 계산합니다.
+
+5. **calEndPageBlock**: 현재 페이지와 페이지 블록 수를 기반으로 끝 페이지 블록을 계산합니다.
+
+6. **checkEndPageBlockValidation**: 끝 페이지 블록이 유효한지 검증합니다.
+
+7. **calStartPageBlock**: 끝 페이지 블록과 페이지 블록 수를 기반으로 시작 페이지 블록을 계산합니다.
+
+8. **checkStartPageBlockValidation**: 시작 페이지 블록이 유효한지 검증합니다.
+
+9. **PagingInfo**: 페이징 정보를 담는 내부 클래스입니다. 페이지 크기, 현재 페이지, 시작 및 끝 페이지 블록, 시작 및 끝 데이터 번호, 총 페이지 블록 수, 총 데이터 수, 이전 및 다음 페이지 존재 여부를 포함합니다.
+
+```java
+package com.example.finalboard.utils;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+public class PagingUtils {
+
+    public static PagingInfo getPagingInfo(String currentPage_, String pageSize_, long totalRowDataCnt) {
+        int pageBlockCnt = 5;
+        int pageSize = checkPageSizeValidation(pageSize_);
+        int totalPageBlockCnt = calTotalPageBlockCnt(totalRowDataCnt, pageSize);
+        int currentPage = checkCurrentPageValidation(Integer.parseInt(currentPage_), totalPageBlockCnt);
+
+        int endPageBlock = calEndPageBlock(currentPage, pageBlockCnt);
+        int startPageBlock = calStartPageBlock(endPageBlock, pageBlockCnt);
+        
+        endPageBlock = checkEndPageBlockValidation(endPageBlock, totalPageBlockCnt);
+        boolean next = (currentPage != totalPageBlockCnt);
+
+        startPageBlock = checkStartPageBlockValidation(startPageBlock);
+        boolean prev = (currentPage != 1);
+
+        int startRowDataNum = (currentPage - 1) * pageSize + 1;
+        int endRowDataNum = startRowDataNum + pageSize - 1;
+
+        return new PagingInfo(
+                pageSize,
+                currentPage,
+                startPageBlock,
+                endPageBlock,
+                startRowDataNum,
+                endRowDataNum,
+                totalPageBlockCnt,
+                totalRowDataCnt,
+                prev,
+                next
+        );
+    }
+
+    private static int checkPageSizeValidation(String pageSize) {
+        if ("5".equals(pageSize) || "10".equals(pageSize) || "30".equals(pageSize) || "50".equals(pageSize)) {
+            return Integer.parseInt(pageSize);
+        }
+        return 10;
+    }
+
+    private static int checkCurrentPageValidation(int currentPage, int totalPageBlockCnt) {
+        if (currentPage > totalPageBlockCnt)
+            currentPage = totalPageBlockCnt;
+        else if (currentPage < 1)
+            currentPage = 1;
+
+        return currentPage;
+    }
+
+    private static int calTotalPageBlockCnt(long totalRowDataCnt, int pageSize) {
+        if (totalRowDataCnt == 0) {
+            return 1;
+        }
+        return (int)(totalRowDataCnt + pageSize - 1) / pageSize;
+    }
+
+    private static int calEndPageBlock(int currentPage, int pageBlockCnt) {
+        return ((currentPage + pageBlockCnt - 1) / pageBlockCnt) * pageBlockCnt;
+    }
+
+    private static int checkEndPageBlockValidation(int endPageBlock, int totalPageBlockCnt) {
+        return Math.min(endPageBlock, totalPageBlockCnt);
+    }
+
+    private static int calStartPageBlock(int endPageBlock, int pageBlockCnt) {
+        return endPageBlock - pageBlockCnt + 1;
+    }
+
+    private static int checkStartPageBlockValidation(int startPageBlock) {
+        return Math.max(startPageBlock, 1);
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class PagingInfo {
+        private int pageSize;
+        private int currentPage;
+        private int startPageBlock;
+        private int endPageBlock;
+        private int startRowDataNum;
+        private int endRowDataNum;
+        private int totalPageBlockCnt;
+        private long totalRowDataCnt;
+        private boolean prev;
+        private boolean next;
+    }
+}
