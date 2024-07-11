@@ -43,10 +43,12 @@ FinalBoard/
 │   └── build.gradle                            # Gradle 빌드 스크립트
 ├── .gitignore                                  # Git 무시 파일 설정
 └── README.md                                   # 프로젝트 설명 파일
+```
 
-## 6. 페이징 유틸리티
+## 5. 페이징 유틸리티
 
-FinalBoard 프로젝트는 데이터의 양이 많을 때 사용자가 쉽게 데이터를 탐색할 수 있도록 페이지네이션 기능을 포함하고 있습니다. 이를 위해 `PagingUtils` 클래스를 직접 구현하여 사용했습니다.
+FinalBoard 프로젝트는 데이터의 양이 많을 때 사용자가 쉽게 데이터를 탐색할 수 있도록 페이지네이션 기능을 포함하고 있습니다. 이를 위해 범용적인 Pageable 라이브러리를 사용하는 대신
+`PagingUtils` 클래스를 직접 구현하여 사용했습니다.
 
 ### PagingUtils 클래스
 
