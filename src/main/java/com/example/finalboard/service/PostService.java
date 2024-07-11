@@ -7,6 +7,9 @@ import com.example.finalboard.repository.PostRepository;
 import com.example.finalboard.repository.UserRepository;
 import com.example.finalboard.util.DevBlogException;
 import com.example.finalboard.util.ExceptionCode;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -25,6 +29,9 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public Page<PostDto> getAllPosts(Specification<Post> spec, Pageable pageable) {
         Page<Post> posts = postRepository.findAll(spec, pageable);
@@ -86,5 +93,19 @@ public class PostService {
 
         postRepository.softDelete(postId);
         log.info("Post soft deleted with ID: {}", postId);
+    }
+
+    // 전체 행 수를 계산하는 메서드
+    public long getTotalRowCount(String baseQuery) {
+        String countQueryStr = "SELECT COUNT(*) " + baseQuery.substring(baseQuery.toLowerCase().indexOf("from"));
+        Query countQuery = entityManager.createNativeQuery(countQueryStr);
+        return ((Number) countQuery.getSingleResult()).longValue();
+    }
+
+    // 페이징된 데이터를 가져오는 메서드
+    public List<PostDto> getPagedPosts(String pagingQuery) {
+        Query query = entityManager.createNativeQuery(pagingQuery, Post.class);
+        List<Post> posts = query.getResultList();
+        return posts.stream().map(PostDto::from).toList();
     }
 }

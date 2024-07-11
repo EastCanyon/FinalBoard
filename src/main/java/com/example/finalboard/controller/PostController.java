@@ -11,9 +11,7 @@ import com.example.finalboard.repository.PostRepository;
 import com.example.finalboard.service.CommentService;
 import com.example.finalboard.service.PostService;
 import com.example.finalboard.service.PostSpecification;
-import com.example.finalboard.util.ApiResult;
-import com.example.finalboard.util.DevBlogException;
-import com.example.finalboard.util.ExceptionCode;
+import com.example.finalboard.util.*;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +72,20 @@ public class PostController {
         return ResponseEntity.ok(ApiResult.success(postsPage));
     }
 
+    @GetMapping("/paged")
+    public ResponseEntity<ApiResult<List<PostDto>>> getPagedPosts(
+            @RequestParam String dbType,
+            @RequestParam String baseQuery,
+            @RequestParam String currentPage,
+            @RequestParam String pageSize) {
+
+        long totalRowDataCnt = postService.getTotalRowCount(baseQuery); // baseQuery를 이용해 전체 행 수를 가져오는 메소드 필요
+        PagingUtils.PagingInfo pagingInfo = PagingUtils.getPagingInfo(currentPage, pageSize, totalRowDataCnt);
+        String pagingQuery = PagingQueryProvider.getPagingQuery(dbType, baseQuery, pagingInfo.getStartRowDataNum(), pagingInfo.getPageSize());
+
+        List<PostDto> pagedPosts = postService.getPagedPosts(pagingQuery);
+        return ResponseEntity.ok(ApiResult.success(pagedPosts));
+    }
 
     private Sort createSortOption(String[] sortDetails) {
         if (sortDetails.length < 2) {
@@ -85,7 +97,6 @@ public class PostController {
             return Sort.by("createdAt").descending(); // 잘못된 정렬 옵션 처리
         }
     }
-
 
     @GetMapping("/{postId}")
     public ApiResult<PostGetResponse> getPostById(@PathVariable Long postId) {
@@ -146,3 +157,4 @@ public class PostController {
         return ResponseEntity.ok(ApiResult.success(posts.map(PostDto::from)));
     }
 }
+
